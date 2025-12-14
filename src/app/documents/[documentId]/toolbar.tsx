@@ -14,7 +14,6 @@ import {
   ItalicIcon,
   ListTodoIcon,
   LucideIcon,
-  MessageSquarePlusIcon,
   PrinterIcon,
   Redo2Icon,
   RemoveFormattingIcon,
@@ -609,12 +608,6 @@ export const Toolbar = () => {
         },
       ],
       [
-        {
-          label: "Comment",
-          icon: MessageSquarePlusIcon,
-          onClick: () => editor?.chain().focus().addPendingComment().run(),
-          isActive: editor?.isActive("liveblocksCommentMark"), 
-        },
         {
           label: "List Todo",
           icon: ListTodoIcon,
