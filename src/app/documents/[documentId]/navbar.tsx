@@ -19,13 +19,11 @@ import {
   RemoveFormattingIcon,
   StrikethroughIcon,
   TextIcon,
-  // TrashIcon,
   UnderlineIcon,
   Undo2Icon,
 } from "lucide-react";
 
 import { RenameDialog } from "@/components/rename-dialog";
-// import { RemoveDialog } from "@/components/remove-dialog";
 import {
   Menubar,
   MenubarContent,
@@ -43,33 +41,28 @@ import { Avatars } from "./avatars";
 
 import { DocumentInput } from "./document-input";
 import { useEditorStore } from "@/store/use-editor-store";
-import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
+import { useDocumentsStore, Document } from "@/store/use-documents-store";
 import { Inbox } from "./inbox";
-import { Doc } from "../../../../convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 interface NavbarProps {
-  data: Doc<"documents">;
+  data: Document;
 }
 
 export const Navbar = ({ data }: NavbarProps) => {
   const router = useRouter();
   const { editor } = useEditorStore();
+  const createDocument = useDocumentsStore((state) => state.createDocument);
 
-  const mutation = useMutation(api.documents.create);
   const onNewDocument = () => {
-    mutation({
-      title: "Untitled Document",
-      initialContent: "",
-    })
-      .catch(() => toast.error("Something went wrong"))
-      .then((id) => {
-        toast.success("Document created");
-        router.push(`/documents/${id}`);
-      });
+    try {
+      const id = createDocument("Untitled Document", "");
+      toast.success("Document created");
+      router.push(`/documents/${id}`);
+    } catch {
+      toast.error("Something went wrong");
+    }
   };
 
   const insertTable = ({ rows, cols }: { rows: number; cols: number }) => {
@@ -166,15 +159,6 @@ export const Navbar = ({ data }: NavbarProps) => {
                       Rename
                     </MenubarItem>
                   </RenameDialog>
-                  {/* <RemoveDialog documentId={data._id}>
-                    <MenubarItem
-                      onClick={(e) => e.stopPropagation()}
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      <TrashIcon className="mr-2 size-4" />
-                      Remove
-                    </MenubarItem>
-                  </RemoveDialog> */}
                   <MenubarSeparator />
                   <MenubarItem onClick={() => window.print()}>
                     <PrinterIcon className="mr-2 size-4" />
@@ -263,13 +247,6 @@ export const Navbar = ({ data }: NavbarProps) => {
       <div className="flex gap-3 items-center pl-6">
         <Avatars />
         <Inbox />
-        <OrganizationSwitcher
-          afterCreateOrganizationUrl="/"
-          afterLeaveOrganizationUrl="/"
-          afterSelectOrganizationUrl="/"
-          afterSelectPersonalUrl="/"
-        />
-        <UserButton />
       </div>
     </nav>
   );

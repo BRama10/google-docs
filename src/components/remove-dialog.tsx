@@ -2,7 +2,7 @@
 
 import { toast } from "sonner";
 import { useState } from "react";
-import { useMutation } from "convex/react";
+import { useDocumentsStore } from "@/store/use-documents-store";
 
 import {
   AlertDialog,
@@ -16,16 +16,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-import { Id } from "../../convex/_generated/dataModel";
-import { api } from "../../convex/_generated/api";
-
 interface RemoveDialogProps {
-  documentId: Id<"documents">;
+  documentId: string;
   children: React.ReactNode;
 }
 
 export const RemoveDialog = ({ documentId, children }: RemoveDialogProps) => {
-  const remove = useMutation(api.documents.removeById);
+  const deleteDocument = useDocumentsStore((state) => state.deleteDocument);
   const [isRemoving, setIsRemoving] = useState(false);
 
   return (
@@ -35,7 +32,7 @@ export const RemoveDialog = ({ documentId, children }: RemoveDialogProps) => {
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permamently delete your document.
+            This action cannot be undone. This will permanently delete your document.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -44,13 +41,15 @@ export const RemoveDialog = ({ documentId, children }: RemoveDialogProps) => {
             disabled={isRemoving}
             onClick={(e) => {
               e.stopPropagation();
-              setIsRemoving(false);
-              remove({ id: documentId })
-                .catch(() => toast.error("Something went wrong"))
-                .then(() => {
-                  toast.success("Document removed");
-                })
-                .finally(() => setIsRemoving(false));
+              setIsRemoving(true);
+              try {
+                deleteDocument(documentId);
+                toast.success("Document removed");
+              } catch {
+                toast.error("Something went wrong");
+              } finally {
+                setIsRemoving(false);
+              }
             }}
           >
             Delete

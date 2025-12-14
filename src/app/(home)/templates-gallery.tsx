@@ -11,27 +11,26 @@ import {
 
 import { templates } from "@/constants/templates";
 import { useRouter } from "next/navigation";
-import { useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+import { useDocumentsStore } from "@/store/use-documents-store";
 import { useState } from "react";
 import { toast } from "sonner";
 
 export const TemplatesGallery = () => {
   const router = useRouter();
-  const create = useMutation(api.documents.create);
+  const createDocument = useDocumentsStore((state) => state.createDocument);
   const [isCreating, setIsCreating] = useState(false);
 
   const onTemplateClick = (title: string, initialContent: string) => {
     setIsCreating(true);
-    create({ title, initialContent })
-      .catch(() => toast.error("Something went wrong"))
-      .then((documentId) => {
-        toast.success("Document created");
-        router.push(`documents/${documentId}`);
-      })
-      .finally(() => {
-        setIsCreating(false);
-      });
+    try {
+      const documentId = createDocument(title, initialContent);
+      toast.success("Document created");
+      router.push(`documents/${documentId}`);
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -53,7 +52,6 @@ export const TemplatesGallery = () => {
                 >
                   <button
                     disabled={isCreating}
-                    // TODO: Add proper initial content
                     onClick={() => onTemplateClick(template.label, template.initialContent)}
                     style={{
                       backgroundImage: `url(${template.imageUrl})`,

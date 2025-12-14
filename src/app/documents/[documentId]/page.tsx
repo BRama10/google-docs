@@ -1,31 +1,23 @@
-import { auth } from "@clerk/nextjs/server";
-import { preloadQuery } from "convex/nextjs";
+"use client";
 
+import { useParams } from "next/navigation";
 import { Document } from "./document";
-import { Id } from "../../../../convex/_generated/dataModel";
-import { api } from "../../../../convex/_generated/api";
+import { useDocumentsStore } from "@/store/use-documents-store";
 
-interface DocumentIdPageProps {
-  params: Promise<{ documentId: Id<"documents"> }>;
-}
+const DocumentIdPage = () => {
+  const params = useParams();
+  const documentId = params.documentId as string;
+  const document = useDocumentsStore((state) => state.getDocument(documentId));
 
-const DocumentIdPage = async ({ params }: DocumentIdPageProps) => {
-  const { documentId } = await params;
-
-  const { getToken } = await auth();
-  const token = (await getToken({ template: "convex" })) ?? undefined;
-
-  if (!token) {
-    throw new Error("Unauthorized");
+  if (!document) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Document not found</p>
+      </div>
+    );
   }
 
-  const preloadedDocument = await preloadQuery(
-    api.documents.getById,
-    { id: documentId },
-    { token }
-  );
-
-  return <Document preloadedDocument={preloadedDocument} />;
+  return <Document document={document} />;
 };
 
 export default DocumentIdPage;

@@ -25,32 +25,36 @@ import TextAlign from "@tiptap/extension-text-align";
 
 import Link from "@tiptap/extension-link";
 
-import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
-import { useStorage } from "@liveblocks/react";
-
 import { useEditorStore } from "@/store/use-editor-store";
+import { useDocumentsStore } from "@/store/use-documents-store";
 import { FontSizeExtensions } from "@/extensions/font-size";
 import { LineHeightExtension } from "@/extensions/line-height";
 import { Ruler } from "./ruler";
-import { Threads } from "./threads";
 import { LEFT_MARGIN_DEFAULT, RIGHT_MARGIN_DEFAULT } from "@/constants/margins";
+import { useState, useCallback } from "react";
 
 interface EditorProps {
   initialContent?: string | undefined;
+  documentId: string;
 }
 
-export const Editor = ({ initialContent }: EditorProps) => {
-  const leftMargin = useStorage((root) => root.leftMargin) ?? LEFT_MARGIN_DEFAULT;
-  const rightMargin = useStorage((root) => root.rightMargin) ?? RIGHT_MARGIN_DEFAULT;
+export const Editor = ({ initialContent, documentId }: EditorProps) => {
+  const [leftMargin, setLeftMargin] = useState(LEFT_MARGIN_DEFAULT);
+  const [rightMargin, setRightMargin] = useState(RIGHT_MARGIN_DEFAULT);
 
-  const liveblocks = useLiveblocksExtension({
-    initialContent,
-    offlineSupport_experimental: true,
-  });
   const { setEditor } = useEditorStore();
+  const updateDocument = useDocumentsStore((state) => state.updateDocument);
+
+  const saveContent = useCallback(
+    (content: string) => {
+      updateDocument(documentId, { content });
+    },
+    [documentId, updateDocument]
+  );
 
   const editor = useEditor({
     immediatelyRender: false,
+    content: initialContent,
     onCreate({ editor }) {
       setEditor(editor);
     },
@@ -59,6 +63,7 @@ export const Editor = ({ initialContent }: EditorProps) => {
     },
     onUpdate({ editor }) {
       setEditor(editor);
+      saveContent(editor.getHTML());
     },
     onSelectionUpdate({ editor }) {
       setEditor(editor);
@@ -83,10 +88,7 @@ export const Editor = ({ initialContent }: EditorProps) => {
       },
     },
     extensions: [
-      liveblocks,
-      StarterKit.configure({
-        history: false,
-      }),
+      StarterKit,
       Table,
       TableCell,
       TableHeader,
@@ -120,10 +122,14 @@ export const Editor = ({ initialContent }: EditorProps) => {
 
   return (
     <div className="size-full overflow-x-auto bg-editor-bg px-4 print:p-0 print:bg-white print:overflow-visible">
-      <Ruler />
+      <Ruler
+        leftMargin={leftMargin}
+        rightMargin={rightMargin}
+        setLeftMargin={setLeftMargin}
+        setRightMargin={setRightMargin}
+      />
       <div className="min-w-max flex justify-center w-[816px] py-4 print:py-0 mx-auto print:w-full print:min-w-0">
         <EditorContent editor={editor} />
-        <Threads editor={editor} />
       </div>
     </div>
   );
